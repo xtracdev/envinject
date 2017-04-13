@@ -99,3 +99,9 @@ time="2017-04-13T22:07:55Z" level=info msg="PARAM3=Param 3 Value"
 time="2017-04-13T22:07:55Z" level=info msg="PARAM4=Param 4 Value"
 time="2017-04-13T22:07:55Z" level=info msg="PARAM5=Param 5 Value"
 </pre>
+
+## Notes
+
+Your base container needs to have the right CA certs to allow AWS services
+to be called. Consider using [scratchy](https://github.com/xtraclabs/scratchy)
+for golang images, which is the scratch image plus CA certs.
