@@ -5,6 +5,8 @@ import (
 	"os"
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/aws"
+	"strings"
 )
 
 
@@ -20,7 +22,7 @@ func InjectEnv() error {
 	}
 
 	//Parameter store is indicated - create a session
-	log.Infof("Looking for parameters starting with %s.", prefix)
+	log.Infof("Looking for parameters starting with %s", prefix)
 
 	log.Info("Create AWS session")
 
@@ -43,9 +45,28 @@ func InjectEnv() error {
 
 	parameterMetadata := resp.Parameters
 	for _, pmd := range parameterMetadata {
-		log.Infof("Injecting %s", *pmd.Name)
+		if !strings.HasPrefix(*pmd.Name, prefix) {
+			log.Infof("skipping %s", *pmd.Name)
+			continue
+		}
 
-		//Add get
+		keyMinusPrefix := (*pmd.Name)[len(prefix):]
+		log.Infof("Injecting %s as %s", *pmd.Name, keyMinusPrefix)
+
+		//Retrieve parameter and inject it into the environment minus the prefix.
+		params := &ssm.GetParametersInput{
+			Names: []*string{
+				pmd.Name,
+			},
+			WithDecryption: aws.Bool(true),
+		}
+		resp, err := svc.GetParameters(params)
+		if err != nil {
+			return err
+		}
+
+		paramVal := resp.Parameters[0].Value
+		os.Setenv(keyMinusPrefix, *paramVal)
 	}
 
 	return nil

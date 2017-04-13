@@ -1,0 +1,31 @@
+{
+  "family": "dumpos",
+  "taskRoleArn": "arn:aws:iam::930295567417:role/dumpos",
+  "containerDefinitions": [
+    {
+      "name": "dumpos",
+      "image": "xtracdev/dumpos",
+      "cpu": 128 ,
+      "memory": 128,
+      "essential": true,
+      "environment": [
+        {
+          "name": "AWS_PARAM_STORE_PREFIX",
+          "value": "sample."
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "eu-west-1"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "ecs-tasks",
+          "awslogs-region":"eu-west-1",
+          "awslogs-stream-prefix": "tasky"
+        }
+      }
+    }
+  ]
+}
