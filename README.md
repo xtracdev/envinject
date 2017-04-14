@@ -72,6 +72,7 @@ For grins, create an encryption key, and store and encrypted parameter:
 <pre>
 aws kms create-key --description sample-key
 aws ssm put-parameter --name sample.my_secret --value 'loose lips sink ships' --type SecureString --key-id <id of key created above>
+</pre>
 
 Copy the task definition template and customize it for your setup. Minimally
 you will have to provide your own account number. When the task definition is complete,
