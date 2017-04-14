@@ -35,38 +35,52 @@ func InjectEnv() error {
 	svc := ssm.New(sess)
 
 	params := &ssm.DescribeParametersInput{}
-	resp, err := svc.DescribeParameters(params)
 
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		return err
-	}
+	for {
+		resp, err := svc.DescribeParameters(params)
 
-	parameterMetadata := resp.Parameters
-	for _, pmd := range parameterMetadata {
-		if !strings.HasPrefix(*pmd.Name, prefix) {
-			log.Infof("skipping %s", *pmd.Name)
-			continue
-		}
-
-		keyMinusPrefix := (*pmd.Name)[len(prefix):]
-		log.Infof("Injecting %s as %s", *pmd.Name, keyMinusPrefix)
-
-		//Retrieve parameter and inject it into the environment minus the prefix.
-		params := &ssm.GetParametersInput{
-			Names: []*string{
-				pmd.Name,
-			},
-			WithDecryption: aws.Bool(true),
-		}
-		resp, err := svc.GetParameters(params)
 		if err != nil {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
 			return err
 		}
 
-		paramVal := resp.Parameters[0].Value
-		os.Setenv(keyMinusPrefix, *paramVal)
+		parameterMetadata := resp.Parameters
+		for _, pmd := range parameterMetadata {
+			if !strings.HasPrefix(*pmd.Name, prefix) {
+				log.Infof("skipping %s", *pmd.Name)
+				continue
+			}
+
+			keyMinusPrefix := (*pmd.Name)[len(prefix):]
+			log.Infof("Injecting %s as %s", *pmd.Name, keyMinusPrefix)
+
+			//Retrieve parameter and inject it into the environment minus the prefix.
+			params := &ssm.GetParametersInput{
+				Names: []*string{
+					pmd.Name,
+				},
+				WithDecryption: aws.Bool(true),
+			}
+			resp, err := svc.GetParameters(params)
+			if err != nil {
+				return err
+			}
+
+			paramVal := resp.Parameters[0].Value
+			os.Setenv(keyMinusPrefix, *paramVal)
+		}
+
+		nextToken := resp.NextToken
+		if nextToken == nil {
+			break
+		}
+
+		params = &ssm.DescribeParametersInput{
+			NextToken:nextToken,
+		}
+
+
 	}
 
 	return nil

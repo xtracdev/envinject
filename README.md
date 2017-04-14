@@ -1,8 +1,5 @@
 # Envinject
 
-**NOTE** Code currently is not paging the results from describe_parameters
-correctly - this needs to be corrected or only the first page will
-be handled.
 
 Optionally inject variables into the environment. Currently supports
 pulling AWS SSM Parameters with a given prefix into the environment.
@@ -43,7 +40,8 @@ document:
 aws iam create-role --role-name dumpos --assume-role-policy-document file://ecs-tasks-trust-policy.json
 </pre>
 
-Next, create a policy document that grants access to the parameters. Customize the 
+Next, create a policy document that grants access to the parameters, and permissions to
+access the decryption key used to decrypt the secret parameters. Customize the 
 params-access-template.json with your account number and rename it as shown in the 
 command below.
 
@@ -91,32 +89,72 @@ aws ecs run-task --cluster DemoCluster --task-definition dumpos
 You should see the parameter values created above in the log output.
 
 <pre>
-time="2017-04-14T04:14:56Z" level=info msg="Looking for parameters starting with sample."
-time="2017-04-14T04:14:56Z" level=info msg="Create AWS session"
-time="2017-04-14T04:14:57Z" level=info msg="skipping dev.p1"
-time="2017-04-14T04:14:57Z" level=info msg="skipping prod.p1"
-time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.1 as 1"
-time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.2 as 2"
-time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.3 as 3"
-time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.4 as 4"
-time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.5 as 5"
-time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.PARAM4 as PARAM4"
-time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.PARAM5 as PARAM5"
-time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.my_secret as my_secret"
-time="2017-04-14T04:14:57Z" level=info msg="HOSTNAME=85336bcc9cfc"
-time="2017-04-14T04:14:57Z" level=info msg="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-time="2017-04-14T04:14:57Z" level=info msg="AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=/v2/credentials/c82b2812-cef9-4b5a-8565-f8db88e5884a"
-time="2017-04-14T04:14:57Z" level=info msg="AWS_PARAM_STORE_PREFIX=sample."
-time="2017-04-14T04:14:57Z" level=info msg="AWS_REGION=eu-west-1"
-time="2017-04-14T04:14:57Z" level=info msg="HOME=/"
-time="2017-04-14T04:14:57Z" level=info msg="1=Value1"
-time="2017-04-14T04:14:57Z" level=info msg="2=Value2"
-time="2017-04-14T04:14:57Z" level=info msg="3=Value3"
-time="2017-04-14T04:14:57Z" level=info msg="4=Value4"
-time="2017-04-14T04:14:57Z" level=info msg="5=Value5"
-time="2017-04-14T04:14:57Z" level=info msg="PARAM4=Param 4 Value"
-time="2017-04-14T04:14:57Z" level=info msg="PARAM5=Param 5 Value"
-time="2017-04-14T04:14:57Z" level=info msg="my_secret=loose lips sink ships"
+time="2017-04-14T04:41:00Z" level=info msg="Looking for parameters starting with sample."
+time="2017-04-14T04:41:00Z" level=info msg="Create AWS session"
+time="2017-04-14T04:41:00Z" level=info msg="skipping dev.p1"
+time="2017-04-14T04:41:00Z" level=info msg="skipping prod.p1"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.1 as 1"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.10 as 10"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.11 as 11"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.12 as 12"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.13 as 13"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.14 as 14"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.15 as 15"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.16 as 16"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.17 as 17"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.18 as 18"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.19 as 19"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.2 as 2"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.20 as 20"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.21 as 21"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.22 as 22"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.23 as 23"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.24 as 24"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.25 as 25"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.3 as 3"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.4 as 4"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.5 as 5"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.6 as 6"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.7 as 7"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.8 as 8"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.9 as 9"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.PARAM4 as PARAM4"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.PARAM5 as PARAM5"
+time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.my_secret as my_secret"
+time="2017-04-14T04:41:00Z" level=info msg="HOSTNAME=0dba3fee938f"
+time="2017-04-14T04:41:00Z" level=info msg="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+time="2017-04-14T04:41:00Z" level=info msg="AWS_PARAM_STORE_PREFIX=sample."
+time="2017-04-14T04:41:00Z" level=info msg="AWS_REGION=eu-west-1"
+time="2017-04-14T04:41:00Z" level=info msg="AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=/v2/credentials/976dde59-36c8-4898-b362-e291d3eba9f3"
+time="2017-04-14T04:41:00Z" level=info msg="HOME=/"
+time="2017-04-14T04:41:00Z" level=info msg="1=Value1"
+time="2017-04-14T04:41:00Z" level=info msg="10=Value10"
+time="2017-04-14T04:41:00Z" level=info msg="11=Value11"
+time="2017-04-14T04:41:00Z" level=info msg="12=Value12"
+time="2017-04-14T04:41:00Z" level=info msg="13=Value13"
+time="2017-04-14T04:41:00Z" level=info msg="14=Value14"
+time="2017-04-14T04:41:00Z" level=info msg="15=Value15"
+time="2017-04-14T04:41:00Z" level=info msg="16=Value16"
+time="2017-04-14T04:41:00Z" level=info msg="17=Value17"
+time="2017-04-14T04:41:00Z" level=info msg="18=Value18"
+time="2017-04-14T04:41:00Z" level=info msg="19=Value19"
+time="2017-04-14T04:41:00Z" level=info msg="2=Value2"
+time="2017-04-14T04:41:00Z" level=info msg="20=Value20"
+time="2017-04-14T04:41:00Z" level=info msg="21=Value21"
+time="2017-04-14T04:41:00Z" level=info msg="22=Value22"
+time="2017-04-14T04:41:00Z" level=info msg="23=Value23"
+time="2017-04-14T04:41:00Z" level=info msg="24=Value24"
+time="2017-04-14T04:41:00Z" level=info msg="25=Value25"
+time="2017-04-14T04:41:00Z" level=info msg="3=Value3"
+time="2017-04-14T04:41:00Z" level=info msg="4=Value4"
+time="2017-04-14T04:41:00Z" level=info msg="5=Value5"
+time="2017-04-14T04:41:00Z" level=info msg="6=Value6"
+time="2017-04-14T04:41:00Z" level=info msg="7=Value7"
+time="2017-04-14T04:41:00Z" level=info msg="8=Value8"
+time="2017-04-14T04:41:00Z" level=info msg="9=Value9"
+time="2017-04-14T04:41:00Z" level=info msg="PARAM4=Param 4 Value"
+time="2017-04-14T04:41:00Z" level=info msg="PARAM5=Param 5 Value"
+time="2017-04-14T04:41:00Z" level=info msg="my_secret=loose lips sink ships"
 </pre>
 
 Note the decrypted read of sample.my_secret. 
