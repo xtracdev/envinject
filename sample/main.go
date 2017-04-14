@@ -7,14 +7,8 @@ import (
 )
 
 func main() {
-	os.Setenv(envinject.ParamPrefixEnvVar,"")
-	err := envinject.InjectEnv()
-	if err != nil {
-		log.Warn(err.Error())
-	}
 
-	os.Setenv(envinject.ParamPrefixEnvVar,"sample.")
-	err = envinject.InjectEnv()
+	err := envinject.InjectEnv()
 	if err != nil {
 		log.Warn(err.Error())
 	}

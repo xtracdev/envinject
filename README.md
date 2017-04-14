@@ -1,5 +1,9 @@
 # Envinject
 
+**NOTE** Code currently is not paging the results from describe_parameters
+correctly - this needs to be corrected or only the first page will
+be handled.
+
 Optionally inject variables into the environment. Currently supports
 pulling AWS SSM Parameters with a given prefix into the environment.
 
@@ -63,6 +67,12 @@ aws ssm put-parameter --name sample.PARAM4 --value 'Param 4 Value' --type String
 aws ssm put-parameter --name sample.PARAM5 --value 'Param 5 Value' --type String
 </pre>
 
+For grins, create an encryption key, and store and encrypted parameter:
+
+<pre>
+aws kms create-key --description sample-key
+aws ssm put-parameter --name sample.my_secret --value 'loose lips sink ships' --type SecureString --key-id <id of key created above>
+
 Copy the task definition template and customize it for your setup. Minimally
 you will have to provide your own account number. When the task definition is complete,
 load the definition.
@@ -80,25 +90,35 @@ aws ecs run-task --cluster DemoCluster --task-definition dumpos
 You should see the parameter values created above in the log output.
 
 <pre>
-time="2017-04-13T22:07:55Z" level=info msg="Looking for parameters starting with sample."
-time="2017-04-13T22:07:55Z" level=info msg="Create AWS session"
-time="2017-04-13T22:07:55Z" level=info msg="Injecting sample.PARAM1 as PARAM1"
-time="2017-04-13T22:07:55Z" level=info msg="Injecting sample.PARAM2 as PARAM2"
-time="2017-04-13T22:07:55Z" level=info msg="Injecting sample.PARAM3 as PARAM3"
-time="2017-04-13T22:07:55Z" level=info msg="Injecting sample.PARAM4 as PARAM4"
-time="2017-04-13T22:07:55Z" level=info msg="Injecting sample.PARAM5 as PARAM5"
-time="2017-04-13T22:07:55Z" level=info msg="HOSTNAME=b9feb330939b"
-time="2017-04-13T22:07:55Z" level=info msg="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-time="2017-04-13T22:07:55Z" level=info msg="AWS_PARAM_STORE_PREFIX=sample."
-time="2017-04-13T22:07:55Z" level=info msg="AWS_REGION=eu-west-1"
-time="2017-04-13T22:07:55Z" level=info msg="AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=/v2/credentials/0d66352b-6e48-4c32-8356-9a1cc696bd7a"
-time="2017-04-13T22:07:55Z" level=info msg="HOME=/"
-time="2017-04-13T22:07:55Z" level=info msg="PARAM1=Param 1 Value"
-time="2017-04-13T22:07:55Z" level=info msg="PARAM2=Param 2 Value"
-time="2017-04-13T22:07:55Z" level=info msg="PARAM3=Param 3 Value"
-time="2017-04-13T22:07:55Z" level=info msg="PARAM4=Param 4 Value"
-time="2017-04-13T22:07:55Z" level=info msg="PARAM5=Param 5 Value"
+time="2017-04-14T04:14:56Z" level=info msg="Looking for parameters starting with sample."
+time="2017-04-14T04:14:56Z" level=info msg="Create AWS session"
+time="2017-04-14T04:14:57Z" level=info msg="skipping dev.p1"
+time="2017-04-14T04:14:57Z" level=info msg="skipping prod.p1"
+time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.1 as 1"
+time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.2 as 2"
+time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.3 as 3"
+time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.4 as 4"
+time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.5 as 5"
+time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.PARAM4 as PARAM4"
+time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.PARAM5 as PARAM5"
+time="2017-04-14T04:14:57Z" level=info msg="Injecting sample.my_secret as my_secret"
+time="2017-04-14T04:14:57Z" level=info msg="HOSTNAME=85336bcc9cfc"
+time="2017-04-14T04:14:57Z" level=info msg="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+time="2017-04-14T04:14:57Z" level=info msg="AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=/v2/credentials/c82b2812-cef9-4b5a-8565-f8db88e5884a"
+time="2017-04-14T04:14:57Z" level=info msg="AWS_PARAM_STORE_PREFIX=sample."
+time="2017-04-14T04:14:57Z" level=info msg="AWS_REGION=eu-west-1"
+time="2017-04-14T04:14:57Z" level=info msg="HOME=/"
+time="2017-04-14T04:14:57Z" level=info msg="1=Value1"
+time="2017-04-14T04:14:57Z" level=info msg="2=Value2"
+time="2017-04-14T04:14:57Z" level=info msg="3=Value3"
+time="2017-04-14T04:14:57Z" level=info msg="4=Value4"
+time="2017-04-14T04:14:57Z" level=info msg="5=Value5"
+time="2017-04-14T04:14:57Z" level=info msg="PARAM4=Param 4 Value"
+time="2017-04-14T04:14:57Z" level=info msg="PARAM5=Param 5 Value"
+time="2017-04-14T04:14:57Z" level=info msg="my_secret=loose lips sink ships"
 </pre>
+
+Note the decrypted read of sample.my_secret. 
 
 ## Notes
 

@@ -17,6 +17,16 @@
       "Resource": [
         "arn:aws:ssm:eu-west-1:<account-id>:parameter/*"
       ]
+    },
+    {
+        "Sid": "Stmt1482841948000",
+        "Effect": "Allow",
+        "Action": [
+            "kms:Decrypt"
+        ],
+        "Resource": [
+            "arn:aws:kms:us-east-1:<account-id>:key/<key-id-for-prod-app1-key>"
+        ]
     }
   ]
 }
