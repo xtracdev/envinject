@@ -51,9 +51,9 @@ aws iam create-policy --policy-name config-params --policy-document file://param
 
 Next, attach the above policy to the role you created:
 
-<pre>
-aws iam attach-role-policy --role-name dumpos --policy-arn "arn:aws:iam::<account-id>:policy/config-params"
-</pre>
+
+    aws iam attach-role-policy --role-name dumpos --policy-arn "arn:aws:iam::<account-id>:policy/config-params"
+
 
 Next, seed some values to make the demo more interesting, e.g.
 
