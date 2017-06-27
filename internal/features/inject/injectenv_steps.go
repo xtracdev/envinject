@@ -14,6 +14,8 @@ import (
 func init() {
 	var env *envinject.InjectedEnv
 	Given(`^some configuration store in the SSM parameter store$`, func() {
+		log.Info("Assuming user has access to the default key for the account")
+
 		session, err := session.NewSession()
 		if err != nil {
 			T.Errorf(err.Error())
@@ -28,6 +30,18 @@ func init() {
 			Value:aws.String("p1Value"),
 		}
 		_, err = svc.PutParameter(&p1Input)
+		if err != nil {
+			T.Errorf(err.Error())
+			return
+		}
+
+		p2Input := ssm.PutParameterInput{
+			Name: aws.String("inttest-p2"),
+			Overwrite:aws.Bool(true),
+			Type:aws.String("SecureString"),
+			Value:aws.String("p2Value is secret"),
+		}
+		_, err = svc.PutParameter(&p2Input)
 		if err != nil {
 			T.Errorf(err.Error())
 			return
@@ -54,6 +68,8 @@ func init() {
 		}
 		p1 := env.Getenv("p1")
 		assert.Equal(T, "p1Value", p1)
+		p2 := env.Getenv("p2")
+		assert.Equal(T, "p2Value is secret", p2)
 	})
 
 }
