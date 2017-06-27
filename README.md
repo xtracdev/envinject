@@ -1,7 +1,12 @@
 # Envinject
 
 
-Optionally inject variables into the environment. Currently supports
+Optionally inject variables into an environment structure that allows 
+reading like a 12 factor app, but without making the parameters available
+via docker inspect. This allows injecting secrets without making it super
+easy to obtain the secrets from the command line.
+
+Currently supports
 pulling AWS SSM Parameters with a given prefix into the environment.
 
 The goal is to be able to write code that can get its configuration from
@@ -9,7 +14,20 @@ the environment, with the values in the environment potentially injected
 with values from some configuration store like the AWS SSM Parameter
 store.
 
-The InjectEnv function is the mechanism to inject AWS parameter store
+## Usage
+
+For pass through use, simply instantiate InjectEnv with an empty
+AWS_PARAM_STORE_PREFIX and use the methods on the type to read 
+configuration set as environment variables.
+
+To read parameter store variables, store the variables using a 
+prefix in front of each environment variable name (which serves as
+a namespace or environment tag), set AWS_PARAM_STORE_PREFIX
+to the prefix, and run your app. You'll need to configure your
+environment to pick up AWS credentials, which is done in the usual
+way.
+
+The InjectEnv type is the mechanism to inject AWS parameter store
 values into the environment. If the AWS_PARAM_STORE_PREFIX environment 
 variable is set, the code will attempt to read parameters from the 
 parameter store, injecting the parameters with names statring with the 
@@ -18,6 +36,11 @@ AWS_PARAM_STORE_PREFIX is set to `foo-`, any variables starting with
 `foo-` are injected into the environmen: `foo-var1` is injected as `var1`,
 `foo-var2` is injected as `var2`, and so on. All other parameters are 
 ignored.
+
+If AWS_PARAM_STORE_PREFIX is not set, then the class acts as a pass
+through, reading variables from environment variables. This is useful
+when using a container workflow that does not include the use of 
+AWS services.
 
 To illustrate how this works for tasks run on an ECS cluster, a 
 sample os provided. Built the sample via the provided Makefile, or just
