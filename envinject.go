@@ -37,7 +37,7 @@ func makeInjectedEnv() *InjectedEnv {
 }
 
 func (i *InjectedEnv) InjectVar(name, value string) {
-	if i.passThrough == true {
+	if i.passThrough != true {
 		i.environment[name] = value
 	}
 }
