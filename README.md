@@ -17,33 +17,33 @@ store.
 ## Usage
 
 For pass through use, simply instantiate InjectEnv with an empty
-AWS_PARAM_STORE_PREFIX and use the methods on the type to read 
-configuration set as environment variables.
+AWS_PARAM_STORE_PREFIX and use the methods on the InjectEnv type to read 
+configuration set as environment variables. This is useful
+when using a container workflow that does not include the use of 
+AWS services.
 
 To read parameter store variables, store the variables using a 
 prefix in front of each environment variable name (which serves as
 a namespace or environment tag), set AWS_PARAM_STORE_PREFIX
-to the prefix, and run your app. You'll need to configure your
+to the prefix, and run your app reading environment config via the
+InjectEnv type methods. You'll need to configure your
 environment to pick up AWS credentials, which is done in the usual
 way.
 
-The InjectEnv type is the mechanism to inject AWS parameter store
-values into the environment. If the AWS_PARAM_STORE_PREFIX environment 
-variable is set, the code will attempt to read parameters from the 
-parameter store, injecting the parameters with names statring with the 
-prefix, using the name stripped of the prefix as the key. So if
-AWS_PARAM_STORE_PREFIX is set to `foo-`, any variables starting with
-`foo-` are injected into the environmen: `foo-var1` is injected as `var1`,
-`foo-var2` is injected as `var2`, and so on. All other parameters are 
-ignored.
+Note that parameter store variables are stored in InjectEnv without
+the prefix. For example, if the code needs an environment variable
+P1, and the environment the code run in tags variables with the
+demo prefix (and uses demo for AWS_PARAM_STORE_PREFIX), then
+P1 is made available via InjectEnv Getenv("P1").
 
-If AWS_PARAM_STORE_PREFIX is not set, then the class acts as a pass
-through, reading variables from environment variables. This is useful
-when using a container workflow that does not include the use of 
-AWS services.
+Note that only the parameter store variables with the matching prefix
+are made available by the InjectEnv instance. All others are ignore.
+This allows using fine grained key management to assign different 
+IAM service roles to different components (if desired) to keep one
+component from reading another component's secret config.
 
 To illustrate how this works for tasks run on an ECS cluster, a 
-sample os provided. Built the sample via the provided Makefile, or just
+sample is provided. Built the sample via the provided Makefile, or just
 use the image that has been pushed it docker.io as xtracdev/dumpos.
 
 To run the sample, some set up is required. First, if the log group
