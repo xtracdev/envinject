@@ -58,6 +58,16 @@ docker run -e AWS_PARAM_STORE_PREFIX=inttest- \
 
 </pre>
 
+Note that you can run the sample to use the local environment as well:
+
+<pre>
+docker run  \
+ -e FOO=fooval \
+ -e BAR=barval \
+ -e BAZ=yes-its-bazval \
+ xtracdev/dumpos:latest
+</pre>
+
 To run the sample on ECS, some set up is required. First, if the log group
 named in the task definition template is used, create it before running
 the task, e.g.
