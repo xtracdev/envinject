@@ -46,7 +46,19 @@ To illustrate how this works for tasks run on an ECS cluster, a
 sample is provided. Built the sample via the provided Makefile, or just
 use the image that has been pushed it docker.io as xtracdev/dumpos.
 
-To run the sample, some set up is required. First, if the log group
+To run the sample locally, use the docker command line to inject
+command line arguments, e.g.
+
+<pre>
+docker run -e AWS_PARAM_STORE_PREFIX=inttest- \
+ -e AWS_REGION=us-east-1 \
+ -e AWS_ACCESS_KEY_ID=<access key id> \
+ -e AWS_SECRET_ACCESS_KEY=<secret access key> \
+ xtracdev/dumpos:latest
+
+</pre>
+
+To run the sample on ECS, some set up is required. First, if the log group
 named in the task definition template is used, create it before running
 the task, e.g.
 
@@ -187,3 +199,27 @@ Note the decrypted read of sample.my_secret.
 Your base container needs to have the right CA certs to allow AWS services
 to be called. Consider using [scratchy](https://github.com/xtraclabs/scratchy)
 for golang images, which is the scratch image plus CA certs.
+
+
+## Contributing
+
+To contribute, you must certify you agree with the [Developer Certificate of Origin](http://developercertificate.org/)
+by signing your commits via `git -s`. To create a signature, configure your user name and email address in git.
+Sign with your real name, do not use pseudonyms or submit anonymous commits.
+
+
+In terms of workflow:
+
+0. For significant changes or improvement, create an issue before commencing work.
+1. Fork the respository, and create a branch for your edits.
+2. Add tests that cover your changes, unit tests for smaller changes, acceptance test
+for more significant functionality.
+3. Run gofmt on each file you change before committing your changes.
+4. Run golint on each file you change before committing your changes.
+5. Make sure all the tests pass before committing your changes.
+6. Commit your changes and issue a pull request.
+
+## License
+
+(c) 2017 Fidelity Investments
+Licensed under the Apache License, Version 2.0

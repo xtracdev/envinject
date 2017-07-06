@@ -2,7 +2,7 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/xtraclabs/envinject"
+	"github.com/xtracdev/envinject"
 )
 
 func main() {
@@ -10,6 +10,7 @@ func main() {
 	if err != nil {
 		log.Warn(err.Error())
 	} else {
+		log.Info("*** Dumping injected environment variables")
 		vars := injected.Environ()
 		for _,v := range vars {
 			log.Info(v)
