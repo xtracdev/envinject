@@ -3,7 +3,7 @@ container:
 	docker build -t xtracdev/dumpos:latest .
 
 push:
-	docker push xtracdev/dumpos latest
+	docker push xtracdev/dumpos:latest
 
 clean:
 	rm -f dumpos

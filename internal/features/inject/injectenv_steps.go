@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/aws-sdk-go/aws"
 	"os"
-	"github.com/xtraclabs/envinject"
+	"github.com/xtracdev/envinject"
 	"github.com/stretchr/testify/assert"
 	log "github.com/Sirupsen/logrus"
 )
