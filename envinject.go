@@ -85,22 +85,14 @@ func (i *InjectedEnv) Environ() []string {
 		return os.Environ()
 	}
 
-	var env []string
+	//Baseline is the environment
+	env := os.Environ()
+
+	//Overwrite with param store
 	for k, v := range i.environment {
 		env = append(env,
 			fmt.Sprintf("%s=%s", k, v),
 		)
-	}
-
-	//Now add vars from the environment that were not injected via the param store
-	for _, v := range os.Environ() {
-		parts := strings.Split(v, "=")
-		if len(parts) == 2 {
-			_, ok := i.LookupEnv(parts[0])
-			if ok {
-				env = append(env, v)
-			}
-		}
 	}
 
 	return env

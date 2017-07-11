@@ -3,6 +3,8 @@ package inject
 import (
 	"os"
 
+	"strings"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -109,6 +111,52 @@ func init() {
 		assert.Equal(T, "Foo value", foo)
 		bar := mixed.Getenv("Bar")
 		assert.Equal(T, "Bar value", bar)
+	})
+
+	Given(`^a var defined both in the param store and the environment$`, func() {
+		os.Setenv("p1", "p1 from the environment")
+		mixed, err = envinject.NewInjectedEnv()
+		if err != nil {
+			T.Errorf(err.Error())
+			return
+		}
+	})
+
+	When(`^I lookup the var$`, func() {
+		//Lookup place in following step for convenience
+	})
+
+	Then(`^the param store value is returned$`, func() {
+		p1 := mixed.Getenv("p1")
+		assert.Equal(T, "p1Value", p1)
+	})
+
+	Given(`^a mixed environment$`, func() {
+		//Env set above: p1 is in both, p2 is in the param store,
+		//Foo and Bar are in the environment
+	})
+
+	When(`^I enumerate the vars in the environment$`, func() {
+		//Done below
+	})
+
+	And(`^the same value is in both the env and the parame store$`, func() {
+		//set above
+	})
+
+	Then(`^the param store vars values are returned$`, func() {
+		combined := make(map[string]string)
+		varsWithVals := mixed.Environ()
+		for _, s := range varsWithVals {
+			parts := strings.Split(s, "=")
+			combined[parts[0]] = parts[1]
+		}
+
+		assert.Equal(T, "p1Value", combined["p1"])
+		assert.Equal(T, "p2Value is secret", combined["p2"])
+		assert.Equal(T, "Bar value", combined["Bar"])
+		assert.Equal(T, "Foo value", combined["Foo"])
+
 	})
 
 }
