@@ -12,7 +12,7 @@ func main() {
 	} else {
 		log.Info("*** Dumping injected environment variables")
 		vars := injected.Environ()
-		for _,v := range vars {
+		for _, v := range vars {
 			log.Info(v)
 		}
 	}

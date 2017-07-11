@@ -1,13 +1,14 @@
 package envinject
 
 import (
-	"testing"
 	"os"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func setNoParamStore() {
-	os.Setenv(ParamPrefixEnvVar,"")
+	os.Setenv(ParamPrefixEnvVar, "")
 }
 
 func setEnv() {
@@ -19,9 +20,9 @@ func setEnv() {
 func TestPassthroughGetenv(t *testing.T) {
 	setEnv()
 
-	i,err := NewInjectedEnv()
+	i, err := NewInjectedEnv()
 
-	if assert.Nil(t,err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "foo val", i.Getenv("foo"))
 		assert.Equal(t, "bar val", i.Getenv("bar"))
 	}
@@ -30,10 +31,10 @@ func TestPassthroughGetenv(t *testing.T) {
 func TestPassthroughLookupEnv(t *testing.T) {
 	setEnv()
 
-	i,err := NewInjectedEnv()
+	i, err := NewInjectedEnv()
 
-	if assert.Nil(t,err) {
-		foo,hasFoo := i.LookupEnv("foo")
+	if assert.Nil(t, err) {
+		foo, hasFoo := i.LookupEnv("foo")
 		assert.Equal(t, "foo val", foo)
 		assert.Equal(t, true, hasFoo)
 
@@ -44,7 +45,7 @@ func TestPassthroughLookupEnv(t *testing.T) {
 }
 
 func sliceContains(slice []string, s string) bool {
-	for _,v := range slice {
+	for _, v := range slice {
 		if v == s {
 			return true
 		}
@@ -55,8 +56,8 @@ func sliceContains(slice []string, s string) bool {
 
 func TestPassthroughEnvironment(t *testing.T) {
 	setEnv()
-	i,err := NewInjectedEnv()
-	if assert.Nil(t,err) {
+	i, err := NewInjectedEnv()
+	if assert.Nil(t, err) {
 		e := i.Environ()
 		assert.True(t, sliceContains(e, "foo=foo val"))
 		assert.True(t, sliceContains(e, "bar=bar val"))
