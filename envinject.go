@@ -1,15 +1,15 @@
 package envinject
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/aws/aws-sdk-go/service/ssm"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/aws"
-	"strings"
 	"fmt"
 	"os"
-)
+	"strings"
 
+	log "github.com/Sirupsen/logrus"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ssm"
+)
 
 const ParamPrefixEnvVar = "AWS_PARAM_STORE_PREFIX"
 
@@ -19,8 +19,8 @@ type InjectedEnv struct {
 }
 
 func makePassThroughEnv() *InjectedEnv {
-	injectEnv := InjectedEnv {
-		passThrough:true,
+	injectEnv := InjectedEnv{
+		passThrough: true,
 		environment: make(map[string]string),
 	}
 
@@ -28,8 +28,8 @@ func makePassThroughEnv() *InjectedEnv {
 }
 
 func makeInjectedEnv() *InjectedEnv {
-	injectEnv := InjectedEnv {
-		passThrough:false,
+	injectEnv := InjectedEnv{
+		passThrough: false,
 		environment: make(map[string]string),
 	}
 
@@ -42,9 +42,9 @@ func (i *InjectedEnv) InjectVar(name, value string) {
 	}
 }
 
-
 // Getenv retrieves the value of the environment variable named by the key.
-// It returns the value, which will be empty if the variable is not present.
+// It returns the value, which will be empty if the variable is not present
+// in either the injected env or the external environment.
 // To distinguish between an empty value and an unset value, use LookupEnv.
 // Note: spec borrowed from golang.org os.Getenv
 func (i *InjectedEnv) Getenv(name string) string {
@@ -52,7 +52,12 @@ func (i *InjectedEnv) Getenv(name string) string {
 		return os.Getenv(name)
 	}
 
-	return i.environment[name]
+	v, ok := i.environment[name]
+	if ok {
+		return v
+	}
+
+	return os.Getenv(name)
 }
 
 // LookupEnv retrieves the value of the environment variable named by the key. If
@@ -60,22 +65,31 @@ func (i *InjectedEnv) Getenv(name string) string {
 // is returned and the boolean is true. Otherwise the returned
 // value will be empty and the boolean will be false.
 // Note: spec borrowed from golang.org os.LookupEnv
-func (i *InjectedEnv) LookupEnv(name string) (string,bool) {
+func (i *InjectedEnv) LookupEnv(name string) (string, bool) {
 	if i.passThrough == true {
 		return os.LookupEnv(name)
 	}
 
-	v,ok := i.environment[name]
-	return v,ok
+	v, ok := i.environment[name]
+	if ok {
+		return v, ok
+	}
+
+	return os.LookupEnv(name)
 }
 
-func (i *InjectedEnv)  Environ() []string {
+// Environ returns a copy of strings representing the environment, in the form "key=value".
+// Note: spec borrowed from golang.org os.Environ
+func (i *InjectedEnv) Environ() []string {
 	if i.passThrough == true {
 		return os.Environ()
 	}
 
-	var env []string
-	for k,v := range i.environment {
+	//Baseline is the environment
+	env := os.Environ()
+
+	//Overwrite with param store
+	for k, v := range i.environment {
 		env = append(env,
 			fmt.Sprintf("%s=%s", k, v),
 		)
@@ -83,20 +97,14 @@ func (i *InjectedEnv)  Environ() []string {
 
 	return env
 }
-// Environ returns a copy of strings representing the environment, in the form "key=value".
-// Note: spec borrowed from golang.org os.Environ
 
-
-
-
-
-func NewInjectedEnv() (*InjectedEnv,error) {
+func NewInjectedEnv() (*InjectedEnv, error) {
 
 	//Need a parameter prefix if we are reading from the SSM parameter store
 	prefix := os.Getenv(ParamPrefixEnvVar)
 	if prefix == "" {
 		log.Infof("%s env variable not set - reading configuration from os environment.", ParamPrefixEnvVar)
-		return makePassThroughEnv(),nil
+		return makePassThroughEnv(), nil
 	}
 
 	//Parameter store is indicated - create a session
@@ -106,7 +114,7 @@ func NewInjectedEnv() (*InjectedEnv,error) {
 
 	sess, err := session.NewSession()
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	//Read the params and inject them into the environment
@@ -122,7 +130,7 @@ func NewInjectedEnv() (*InjectedEnv,error) {
 		if err != nil {
 			// Print the error, cast err to awserr.Error to get the Code and
 			// Message from an error.
-			return nil,err
+			return nil, err
 		}
 
 		parameterMetadata := resp.Parameters
@@ -144,7 +152,7 @@ func NewInjectedEnv() (*InjectedEnv,error) {
 			}
 			resp, err := svc.GetParameters(params)
 			if err != nil {
-				return nil,err
+				return nil, err
 			}
 
 			paramVal := resp.Parameters[0].Value
@@ -157,12 +165,11 @@ func NewInjectedEnv() (*InjectedEnv,error) {
 		}
 
 		params = &ssm.DescribeParametersInput{
-			NextToken:nextToken,
+			NextToken: nextToken,
 		}
-
 
 	}
 
-	return injected,nil
+	return injected, nil
 
 }
