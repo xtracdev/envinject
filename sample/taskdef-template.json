@@ -11,7 +11,7 @@
       "environment": [
         {
           "name": "AWS_PARAM_STORE_PREFIX",
-          "value": "sample."
+          "value": "/sample"
         },
         {
           "name": "AWS_REGION",
