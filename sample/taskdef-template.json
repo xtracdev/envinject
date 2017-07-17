@@ -1,6 +1,6 @@
 {
   "family": "dumpos",
-  "taskRoleArn": "arn:aws:iam::930295567417:role/dumpos",
+  "taskRoleArn": "arn:aws:iam::<account no>:role/dumpos",
   "containerDefinitions": [
     {
       "name": "dumpos",

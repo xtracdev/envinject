@@ -30,7 +30,7 @@ func init() {
 		log.Info("Assuming user has access to the default key for the account")
 
 		p1Input := ssm.PutParameterInput{
-			Name:      aws.String("inttest-p1"),
+			Name:      aws.String("/inttest/p1"),
 			Overwrite: aws.Bool(true),
 			Type:      aws.String("String"),
 			Value:     aws.String("p1Value"),
@@ -42,7 +42,7 @@ func init() {
 		}
 
 		p2Input := ssm.PutParameterInput{
-			Name:      aws.String("inttest-p2"),
+			Name:      aws.String("/inttest/p2"),
 			Overwrite: aws.Bool(true),
 			Type:      aws.String("SecureString"),
 			Value:     aws.String("p2Value is secret"),
@@ -56,7 +56,7 @@ func init() {
 	})
 
 	When(`^I create an inject environment$`, func() {
-		os.Setenv("AWS_PARAM_STORE_PREFIX", "inttest-")
+		os.Setenv(envinject.ParamPathEnvVar, "/inttest")
 		var err error
 		env, err = envinject.NewInjectedEnv()
 		if err != nil {
@@ -84,7 +84,7 @@ func init() {
 	})
 
 	When(`^I create an injected environment$`, func() {
-		os.Setenv("AWS_PARAM_STORE_PREFIX", "inttest-")
+		os.Setenv(envinject.ParamPathEnvVar, "/inttest")
 		var err error
 		mixed, err = envinject.NewInjectedEnv()
 		if err != nil {

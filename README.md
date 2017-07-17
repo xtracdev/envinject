@@ -103,11 +103,11 @@ Next, attach the above policy to the role you created:
 Next, seed some values to make the demo more interesting, e.g.
 
 <pre>
-aws ssm put-parameter --name sample.PARAM1 --value 'Param 1 Value' --type String
-aws ssm put-parameter --name sample.PARAM2 --value 'Param 2 Value' --type String
-aws ssm put-parameter --name sample.PARAM3 --value 'Param 3 Value' --type String
-aws ssm put-parameter --name sample.PARAM4 --value 'Param 4 Value' --type String
-aws ssm put-parameter --name sample.PARAM5 --value 'Param 5 Value' --type String
+aws ssm put-parameter --name /sample/PARAM1 --value 'Param 1 Value' --type String
+aws ssm put-parameter --name /sample/PARAM2 --value 'Param 2 Value' --type String
+aws ssm put-parameter --name /sample/PARAM3 --value 'Param 3 Value' --type String
+aws ssm put-parameter --name /sample/PARAM4 --value 'Param 4 Value' --type String
+aws ssm put-parameter --name /sample/PARAM5 --value 'Param 5 Value' --type String
 </pre>
 
 For grins, create an encryption key, and store and encrypted parameter:
