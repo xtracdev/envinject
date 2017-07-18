@@ -1,0 +1,198 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  AWS CloudFormation template to create a VPC for ECS deployment. This
+  creates public and private subnets in two AZs, has an IGW for load 
+  balancer ingress, and NAT gateways in each AZ to allow access from
+  the private subnets for accessing the ECS and ECR services.
+Resources:
+
+## VPC with public and private subnets in two availability zones
+
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: '172.31.0.0/16'
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+
+  PubSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: '172.31.0.0/24'
+      AvailabilityZone: !Select [ 0, "Fn::GetAZs": !Ref "AWS::Region" ]
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: public-1
+
+  PubSubnetAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: '172.31.1.0/24'
+      AvailabilityZone: !Select [ 1, "Fn::GetAZs": !Ref "AWS::Region" ]
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: public-2
+
+  PrivateSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: '172.31.2.0/24'
+      AvailabilityZone: !Select [ 0, "Fn::GetAZs": !Ref "AWS::Region" ]
+      Tags:
+      - Key: Name
+        Value: private-1
+
+  PrivateSubnetAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: '172.31.3.0/24'
+      AvailabilityZone: !Select [ 1, "Fn::GetAZs": !Ref "AWS::Region" ]
+      Tags:
+      - Key: Name
+        Value: private-2
+
+## Gateway and routing
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+  
+  RouteViaIgw:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+
+  PublicRouteViaIgw:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref RouteViaIgw
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PubSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PubSubnetAz1
+      RouteTableId: !Ref RouteViaIgw
+
+  PubSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PubSubnetAz2
+      RouteTableId: !Ref RouteViaIgw
+
+## Private Subnet Az1
+
+  RouteViaNatGW1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+
+  NAT1:
+    DependsOn: AttachGateway
+    Type: AWS::EC2::NatGateway
+    Properties:
+        AllocationId:
+          Fn::GetAtt:
+            - EIP1
+            - AllocationId
+        SubnetId:
+          Ref: PubSubnetAz1
+  EIP1:
+    Type: AWS::EC2::EIP
+    Properties:
+        Domain: vpc
+  Route1:
+    Type: AWS::EC2::Route
+    Properties:
+        RouteTableId:
+          Ref: RouteViaNatGW1
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId:
+          Ref: NAT1   
+
+  PrivateSubnet1RTA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetAz1
+      RouteTableId: !Ref RouteViaNatGW1
+
+## Private Subnet Az1
+
+  RouteViaNatGW2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+
+  NAT2:
+    DependsOn: AttachGateway
+    Type: AWS::EC2::NatGateway
+    Properties:
+        AllocationId:
+          Fn::GetAtt:
+            - EIP2
+            - AllocationId
+        SubnetId:
+          Ref: PubSubnetAz2
+  EIP2:
+    Type: AWS::EC2::EIP
+    Properties:
+        Domain: vpc
+  Route2:
+    Type: AWS::EC2::Route
+    Properties:
+        RouteTableId:
+          Ref: RouteViaNatGW2
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId:
+          Ref: NAT2
+
+  PrivateSubnet2RTA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetAz2
+      RouteTableId: !Ref RouteViaNatGW2
+
+  IngressSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SSH Ingress
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+
+Outputs:
+  VpcId:
+    Description: The ID of the VPC
+    Value: !Ref Vpc
+ 
+  PrivateSubnet1:
+    Value: !Ref PrivateSubnetAz1
+
+  PrivateSubnet2:
+    Value: !Ref PrivateSubnetAz2
+
+  PublicSubnet1:
+    Value: !Ref PubSubnetAz1
+
+  PublicSubnet2:
+    Value: !Ref PubSubnetAz2
+
+  SSHIngressSecurityGroup:
+    Description: Security group id of the ECS cluster instances
+    Value: !GetAtt IngressSecurityGroup.GroupId

@@ -1,0 +1,240 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Create an ECS cluster with an auto scale group and launch config definitions. Both
+  the AWS docker AMI and Rancher OS AMI are supported.
+
+Parameters:
+  AMIType:
+    Type: String
+    AllowedValues:
+      - Amazon
+      - Rancher
+    Default:
+      Amazon
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the ECS instances.
+  DesiredCapacity:
+    Type: Number
+    Default: '2'
+    Description: Number of instances to launch in your ECS cluster.
+  MaxSize:
+    Type: Number
+    Default: '2'
+    Description: Maximum number of instances that can be launched in your ECS cluster.
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.micro, t2.small, t2.medium, t2.large, m3.medium, m3.large,
+      m3.xlarge, m3.2xlarge, m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge,
+      c4.large, c4.xlarge, c4.2xlarge, c4.4xlarge, c4.8xlarge, c3.large, c3.xlarge,
+      c3.2xlarge, c3.4xlarge, c3.8xlarge, r3.large, r3.xlarge, r3.2xlarge, r3.4xlarge,
+      r3.8xlarge, i2.xlarge, i2.2xlarge, i2.4xlarge, i2.8xlarge]
+    ConstraintDescription: Please choose a valid instance type.
+
+  EcsClusterName:
+    Type: String
+    Description: >
+      Specifies the ECS Cluster Name with which the resources would be
+      associated
+    Default: clustah
+
+  EcsRoleArn:
+    Type: String
+
+  PrivateSubnet1:
+    Type: String
+
+  PrivateSubnet2:
+    Type: String
+
+  VpcId:
+    Type: String 
+
+  IngressSecurityGroup:
+    Description: VPC SSH Ingress Security Group
+    Type: String
+
+Mappings:
+  AWSRegionToAMI:
+    us-east-1:
+      AMIID: ami-275ffe31
+    us-east-2:
+      AMIID: ami-62745007
+    us-west-1:
+      AMIID: ami-689bc208
+    us-west-2:
+      AMIID: ami-62d35c02
+    eu-west-1:
+      AMIID: ami-95f8d2f3
+    eu-west-2:
+      AMIID: ami-bf9481db
+    eu-central-1:
+      AMIID: ami-085e8a67
+    ap-northeast-1:
+      AMIID: ami-f63f6f91
+    ap-southeast-1:
+      AMIID: ami-b4ae1dd7
+    ap-southeast-2:
+      AMIID: ami-fbe9eb98
+    ca-central-1:
+      AMIID: ami-ee58e58a
+
+# Rancher AMIs via https://github.com/rancher/os/blob/master/README.md
+  RancherRegionToAMI:
+    us-east-1:
+      AMIID: ami-60742376
+    us-east-2:
+      AMIID: ami-1b0e287e
+    us-west-1:
+      AMIID: ami-45efcc25
+    us-west-2:
+      AMIID: ami-811b77e1
+    eu-west-1:
+      AMIID: ami-50f2e236
+    eu-west-2:
+      AMIID: ami-61fbec05
+    eu-central-1:
+      AMIID: ami-0a30ea65
+    ap-northeast-1:
+      AMIID: ami-fce2e29b
+    ap-southeast-1:
+      AMIID: ami-75f87816
+    ap-southeast-2:
+      AMIID: ami-2deff84e
+    ca-central-1:
+      AMIID: ami-65209c01
+
+
+
+Conditions:
+  UseAmazonAMI: !Equals [!Ref AMIType, Amazon]
+
+Resources:
+
+  MyCluster:
+    Type: "AWS::ECS::Cluster"
+    Properties:
+        ClusterName: !Ref EcsClusterName
+
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles: [!Ref 'EcsRoleArn']
+
+
+
+
+  EcsInstanceLc:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !If [UseAmazonAMI, !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID], !FindInMap [RancherRegionToAMI, !Ref 'AWS::Region', AMIID]]
+      InstanceType: !Ref InstanceType
+      AssociatePublicIpAddress: true
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      KeyName: !Ref KeyName
+      SecurityGroups: [ !Ref IngressSecurityGroup ]
+      UserData:
+        !If
+          - UseAmazonAMI
+          - Fn::Base64: !Sub |
+              #!/bin/bash
+              echo ECS_CLUSTER=${EcsClusterName} >> /etc/ecs/ecs.config
+          - Fn::Base64: !Sub |
+              #cloud-config
+              rancher:
+                environment:
+                  ECS_CLUSTER: ${EcsClusterName}
+                  # Note: You will need to add this variable, if using awslogs for ECS task.
+                  ECS_AVAILABLE_LOGGING_DRIVERS: |-
+                    ["json-file","awslogs"]
+
+
+
+  EcsInstanceAsg:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn: MyCluster
+    Properties:
+      VPCZoneIdentifier:
+      - !Ref PrivateSubnet1
+      - !Ref PrivateSubnet2
+      LaunchConfigurationName: !Ref EcsInstanceLc
+      MinSize: '2'
+      MaxSize: !Ref MaxSize
+      DesiredCapacity: !Ref DesiredCapacity
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "ECS Instance - ${AWS::StackName}"
+          PropagateAtLaunch: 'true'
+        -
+          Key: Description
+          Value: >
+            This instance is the part of the Auto Scaling group which was created
+            through ECS Console
+          PropagateAtLaunch: 'true'
+
+  ScaleECSClusterOut:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: PercentChangeInCapacity
+      PolicyType: StepScaling
+      StepAdjustments:
+      - ScalingAdjustment: 100
+        MetricIntervalLowerBound: 0.0
+      AutoScalingGroupName:
+        Ref: EcsInstanceAsg
+
+  ScaleECSClusterIn:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: PercentChangeInCapacity
+      PolicyType: StepScaling
+      StepAdjustments:
+      - ScalingAdjustment: -50
+        MetricIntervalUpperBound: 0.0
+      AutoScalingGroupName:
+        Ref: EcsInstanceAsg
+
+  ECSClusterScaleInAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: True
+      ComparisonOperator: LessThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      MetricName: CPUReservation
+      Namespace: AWS/ECS
+      Period: 300
+      Statistic: Average
+      Threshold: 25
+      AlarmActions:
+      - Ref: ScaleECSClusterIn
+      Dimensions:
+      - Name: ClusterName
+        Value: !Ref EcsClusterName
+
+  ECSClusterScaleOutAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: True
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      MetricName: CPUReservation
+      Namespace: AWS/ECS
+      Period: 300
+      Statistic: Average
+      Threshold: 75
+      AlarmActions:
+      - Ref: ScaleECSClusterOut
+      Dimensions:
+      - Name: ClusterName
+        Value: !Ref EcsClusterName
+
+Outputs:
+
+  ECSCluster:
+    Value: !Ref MyCluster
+
