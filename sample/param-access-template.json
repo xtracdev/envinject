@@ -15,7 +15,8 @@
         "ssm:GetParameters"
       ],
       "Resource": [
-        "arn:aws:ssm:eu-west-1:<account-id>:parameter/*"
+        "arn:aws:ssm:eu-west-1:<account-id>:parameter/*",
+        "arn:aws:ssm:eu-west-1:<account-id>:parameter"
       ]
     },
     {
