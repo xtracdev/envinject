@@ -103,18 +103,18 @@ Next, attach the above policy to the role you created:
 Next, seed some values to make the demo more interesting, e.g.
 
 <pre>
-aws ssm put-parameter --name /sample/PARAM1 --value 'Param 1 Value' --type String
-aws ssm put-parameter --name /sample/PARAM2 --value 'Param 2 Value' --type String
-aws ssm put-parameter --name /sample/PARAM3 --value 'Param 3 Value' --type String
-aws ssm put-parameter --name /sample/PARAM4 --value 'Param 4 Value' --type String
-aws ssm put-parameter --name /sample/PARAM5 --value 'Param 5 Value' --type String
+aws ssm put-parameter --name /myapp/test/PARAM1 --value 'Param 1 Value' --type String
+aws ssm put-parameter --name /myapp/test/PARAM2 --value 'Param 2 Value' --type String
+aws ssm put-parameter --name /myapp/test/PARAM3 --value 'Param 3 Value' --type String
+aws ssm put-parameter --name /myapp/test/PARAM4 --value 'Param 4 Value' --type String
+aws ssm put-parameter --name /myapp/test/PARAM5 --value 'Param 5 Value' --type String
 </pre>
 
 For grins, create an encryption key, and store and encrypted parameter:
 
 <pre>
 aws kms create-key --description sample-key
-aws ssm put-parameter --name sample.my_secret --value 'loose lips sink ships' --type SecureString --key-id <id of key created above>
+aws ssm put-parameter --name /myapp/test/my_secret --value 'loose lips sink ships' --type SecureString --key-id <id of key created above>
 </pre>
 
 Copy the task definition template and customize it for your setup. Minimally
