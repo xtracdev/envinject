@@ -3,15 +3,15 @@ package envinject
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ssm"
+	"strings"
 )
 
-const ParamPrefixEnvVar = "AWS_PARAM_STORE_PREFIX"
+const ParamPathEnvVar = "AWS_PARAM_STORE_PATH"
 
 type InjectedEnv struct {
 	passThrough bool
@@ -100,15 +100,15 @@ func (i *InjectedEnv) Environ() []string {
 
 func NewInjectedEnv() (*InjectedEnv, error) {
 
-	//Need a parameter prefix if we are reading from the SSM parameter store
-	prefix := os.Getenv(ParamPrefixEnvVar)
-	if prefix == "" {
-		log.Infof("%s env variable not set - reading configuration from os environment.", ParamPrefixEnvVar)
+	//Need a parameter path if we are reading from the SSM parameter store
+	paramPath := os.Getenv(ParamPathEnvVar)
+	if paramPath == "" {
+		log.Infof("%s env variable not set - reading configuration from os environment.", ParamPathEnvVar)
 		return makePassThroughEnv(), nil
 	}
 
 	//Parameter store is indicated - create a session
-	log.Infof("Looking for parameters starting with %s", prefix)
+	log.Infof("Looking for parameters starting with %s", paramPath)
 
 	log.Info("Create AWS session")
 
@@ -120,12 +120,15 @@ func NewInjectedEnv() (*InjectedEnv, error) {
 	//Read the params and inject them into the environment
 	svc := ssm.New(sess)
 
-	params := &ssm.DescribeParametersInput{}
+	getParamsInput := &ssm.GetParametersByPathInput{
+		Path:aws.String(paramPath),
+		WithDecryption:aws.Bool(true),
+	}
 
 	injected := makeInjectedEnv()
 
 	for {
-		resp, err := svc.DescribeParameters(params)
+		resp, err := svc.GetParametersByPath(getParamsInput)
 
 		if err != nil {
 			// Print the error, cast err to awserr.Error to get the Code and
@@ -133,30 +136,17 @@ func NewInjectedEnv() (*InjectedEnv, error) {
 			return nil, err
 		}
 
-		parameterMetadata := resp.Parameters
-		for _, pmd := range parameterMetadata {
-			if !strings.HasPrefix(*pmd.Name, prefix) {
-				log.Infof("skipping %s", *pmd.Name)
+		params := resp.Parameters
+		for _, p := range params {
+			//Guard for the prefix strip below
+			if !strings.HasPrefix(*p.Name, paramPath) {
+				log.Infof("skipping %s", *p.Name)
 				continue
 			}
 
-			keyMinusPrefix := (*pmd.Name)[len(prefix):]
-			log.Infof("Injecting %s as %s", *pmd.Name, keyMinusPrefix)
-
-			//Retrieve parameter and inject it into the environment minus the prefix.
-			params := &ssm.GetParametersInput{
-				Names: []*string{
-					pmd.Name,
-				},
-				WithDecryption: aws.Bool(true),
-			}
-			resp, err := svc.GetParameters(params)
-			if err != nil {
-				return nil, err
-			}
-
-			paramVal := resp.Parameters[0].Value
-			injected.InjectVar(keyMinusPrefix, *paramVal)
+			keyMinusPrefix := (*p.Name)[len(paramPath) + 1:]
+			log.Infof("Injecting %s as %s", *p.Name, keyMinusPrefix)
+			injected.InjectVar(keyMinusPrefix, *p.Value)
 		}
 
 		nextToken := resp.NextToken
@@ -164,7 +154,7 @@ func NewInjectedEnv() (*InjectedEnv, error) {
 			break
 		}
 
-		params = &ssm.DescribeParametersInput{
+		getParamsInput = &ssm.GetParametersByPathInput{
 			NextToken: nextToken,
 		}
 

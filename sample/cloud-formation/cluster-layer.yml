@@ -1,0 +1,59 @@
+Description: >
+
+  This template layers on the components that get deployed fresh
+  in a blue/green deployment scenario on top of foundation stack
+  (the vpc, database, etc).
+
+Parameters:
+  BucketRoot:
+    Type: String
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the ECS instances.
+  DeploymentColor:
+    Type: String
+  
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.micro, t2.small, t2.medium, t2.large, m3.medium, m3.large,
+      m3.xlarge, m3.2xlarge, m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge,
+      c4.large, c4.xlarge, c4.2xlarge, c4.4xlarge, c4.8xlarge, c3.large, c3.xlarge,
+      c3.2xlarge, c3.4xlarge, c3.8xlarge, r3.large, r3.xlarge, r3.2xlarge, r3.4xlarge,
+      r3.8xlarge, i2.xlarge, i2.2xlarge, i2.4xlarge, i2.8xlarge]
+    ConstraintDescription: Please choose a valid instance type.
+
+  MaxClusterSize:
+    Type: String
+    Default: 12
+
+Resources:
+
+  VPC:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join ['/', [!Ref BucketRoot, vpc-pub-priv-172.yml]]
+
+  ECSRole:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join ['/', [!Ref BucketRoot, ecs-role.yaml]]
+
+  ECS: 
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join ['/', [!Ref BucketRoot, ecs-cluster.yaml]]
+      Parameters:
+        AMIType: Amazon
+        KeyName: !Ref KeyPairName
+        InstanceType: !Ref InstanceType
+        MaxSize: !Ref MaxClusterSize
+        EcsClusterName: !Ref DeploymentColor
+        EcsRoleArn: !GetAtt ECSRole.Outputs.ECSRoleName
+        PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
+        PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
+        VpcId: !GetAtt VPC.Outputs.VpcId
+        IngressSecurityGroup: !GetAtt VPC.Outputs.SSHIngressSecurityGroup
+    
+

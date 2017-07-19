@@ -1,6 +1,6 @@
 {
   "family": "dumpos",
-  "taskRoleArn": "arn:aws:iam::930295567417:role/dumpos",
+  "taskRoleArn": "arn:aws:iam::<account no>:role/dumpos",
   "containerDefinitions": [
     {
       "name": "dumpos",
@@ -11,7 +11,7 @@
       "environment": [
         {
           "name": "AWS_PARAM_STORE_PREFIX",
-          "value": "sample."
+          "value": "/sample"
         },
         {
           "name": "AWS_REGION",

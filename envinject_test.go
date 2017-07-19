@@ -8,7 +8,7 @@ import (
 )
 
 func setNoParamStore() {
-	os.Setenv(ParamPrefixEnvVar, "")
+	os.Setenv(ParamPathEnvVar, "")
 }
 
 func setEnv() {
