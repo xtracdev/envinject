@@ -17,14 +17,14 @@ store.
 ## Usage
 
 For pass through use, simply instantiate InjectEnv with an empty
-AWS_PARAM_STORE_PREFIX and use the methods on the InjectEnv type to read 
+AWS_PARAM_STORE_PATH and use the methods on the InjectEnv type to read 
 configuration set as environment variables. This is useful
 when using a container workflow that does not include the use of 
 AWS services.
 
 To read parameter store variables, store the variables using a 
 prefix in front of each environment variable name (which serves as
-a namespace or environment tag), set AWS_PARAM_STORE_PREFIX
+a namespace or environment tag), set AWS_PARAM_STORE_PATH
 to the prefix, and run your app reading environment config via the
 InjectEnv type methods. You'll need to configure your
 environment to pick up AWS credentials, which is done in the usual
@@ -33,7 +33,7 @@ way.
 Note that parameter store variables are stored in InjectEnv without
 the prefix. For example, if the code needs an environment variable
 P1, and the environment the code run in tags variables with the
-demo prefix (and uses demo for AWS_PARAM_STORE_PREFIX), then
+demo prefix (and uses demo for AWS_PARAM_STORE_PATH), then
 P1 is made available via InjectEnv Getenv("P1").
 
 Note that only the parameter store variables with the matching prefix
@@ -50,7 +50,7 @@ To run the sample locally, use the docker command line to inject
 command line arguments, e.g.
 
 <pre>
-docker run -e AWS_PARAM_STORE_PREFIX=inttest- \
+docker run -e AWS_PARAM_STORE_PATH=inttest- \
  -e AWS_REGION=us-east-1 \
  -e AWS_ACCESS_KEY_ID=<access key id> \
  -e AWS_SECRET_ACCESS_KEY=<secret access key> \
@@ -168,7 +168,7 @@ time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.PARAM5 as PARAM5"
 time="2017-04-14T04:41:00Z" level=info msg="Injecting sample.my_secret as my_secret"
 time="2017-04-14T04:41:00Z" level=info msg="HOSTNAME=0dba3fee938f"
 time="2017-04-14T04:41:00Z" level=info msg="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-time="2017-04-14T04:41:00Z" level=info msg="AWS_PARAM_STORE_PREFIX=sample."
+time="2017-04-14T04:41:00Z" level=info msg="AWS_PARAM_STORE_PATH=sample."
 time="2017-04-14T04:41:00Z" level=info msg="AWS_REGION=eu-west-1"
 time="2017-04-14T04:41:00Z" level=info msg="AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=/v2/credentials/976dde59-36c8-4898-b362-e291d3eba9f3"
 time="2017-04-14T04:41:00Z" level=info msg="HOME=/"
